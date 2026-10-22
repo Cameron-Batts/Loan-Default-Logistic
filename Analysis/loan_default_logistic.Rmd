@@ -1,0 +1,88 @@
+---
+title: "Loan Default Logistic Regression and Threshold Tradeoffs"
+author: "Cameron Batts"
+output: html_document
+---
+
+## Problem
+Explain the tradeoff between default recall, specificity and accuracy in an imbalanced loan dataset.
+
+## Approach
+Reconstruct an R Markdown workflow from the available report concepts, using a stratified split, training-only median imputation, equal-row AIC comparisons and prespecified thresholds. Explicitly treat default (1) as the positive class.
+
+## Reported results
+The archived main confusion matrix contains TN=6,848, FP=760, FN=753 and TP=199: accuracy 82.32%, default precision 20.75%, default recall 20.90% and specificity 90.01%. Only 8,560 of 9,697 test rows had predictions; 1,137 were missing. The all-nondefault baseline accuracy on those evaluated rows was 88.88%.
+
+## Limitations and corrections
+The PDF used class 0 as positive, so its sensitivity is not default recall. Historical missing-value indicators did not impute the missing values; complete-case omissions reduced coverage. Some AIC comparisons used different row counts and cannot establish the best model. The new workflow changes preprocessing and will not reproduce historical scores. No original source notebook was present; this is a documented reconstruction, not a recovered file.
+
+## Verification
+Dataset dimensions, missingness and relevant counts were checked directly. R is unavailable in this environment, so revised R code was reviewed but not parsed, executed or rendered. No new fitted-model performance is claimed.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+project_root <- if (dir.exists("Data")) "." else ".."
+knitr::opts_knit$set(root.dir = normalizePath(project_root))
+```
+
+```{r preparation}
+loans <- readRDS("Data/LoanData.rds")
+stopifnot(all(loans$isLoanDefault %in% c(0, 1)))
+# Fixed data-quality rule; no outcomes are used to choose exclusions.
+loans <- loans[!is.na(loans$incomeAnnual) & loans$incomeAnnual <= 2500000, ]
+loans$isLoanDefault <- factor(loans$isLoanDefault, levels = c(0, 1))
+set.seed(2020)
+# Split within class before learning imputation values or resampling.
+test_rows <- unlist(lapply(split(seq_len(nrow(loans)), loans$isLoanDefault),
+                          function(rows) sample(rows, floor(length(rows) / 3))))
+train <- loans[-test_rows, ]
+test <- loans[test_rows, ]
+stopifnot(length(intersect(rownames(train), rownames(test))) == 0)
+for (v in c("interestRate", "employmentYears")) {
+  fill <- median(train[[v]], na.rm = TRUE)
+  stopifnot(is.finite(fill))
+  train[[paste0(v, "_missing")]] <- as.integer(is.na(train[[v]]))
+  test[[paste0(v, "_missing")]] <- as.integer(is.na(test[[v]]))
+  train[[v]][is.na(train[[v]])] <- fill
+  test[[v]][is.na(test[[v]])] <- fill
+}
+stopifnot(!anyNA(train), !anyNA(test))
+metrics <- function(truth, predicted) {
+  cm <- table(actual = factor(truth, levels = c(0, 1)),
+              predicted = factor(predicted, levels = c(0, 1)))
+  tn <- cm[1,1]; fp <- cm[1,2]; fn <- cm[2,1]; tp <- cm[2,2]
+  ratio <- function(a,b) if (b == 0) NA_real_ else a/b
+  print(cm)
+  c(accuracy = (tn+tp)/sum(cm), precision_default = ratio(tp,tp+fp),
+    recall_default = ratio(tp,tp+fn), specificity = ratio(tn,tn+fp),
+    balanced_accuracy = mean(c(ratio(tp,tp+fn),ratio(tn,tn+fp))))
+}
+```
+## Fit logistic models on identical training rows
+This source is a newly reconstructed workflow informed by the archived report, not a recovered original notebook. Training-only median imputation replaces historical complete-case deletion. New outputs will therefore differ from the PDF.
+
+```{r fit-logistic}
+full <- glm(isLoanDefault ~ ., data = train, family = binomial())
+top5 <- glm(isLoanDefault ~ incomeAnnual + creditGrade + interestRate +
+              employmentYears + loanAmount, data = train, family = binomial())
+top3 <- glm(isLoanDefault ~ incomeAnnual + creditGrade + interestRate,
+            data = train, family = binomial())
+stopifnot(nobs(full) == nobs(top5), nobs(top5) == nobs(top3))
+AIC(full, top5, top3)
+summary(full)
+```
+
+## Evaluate prespecified thresholds
+The full model is used for all threshold comparisons. The thresholds are fixed examples, not selected using test labels. A final operational threshold would require separate validation and explicit cost assumptions.
+
+```{r evaluate}
+probability <- predict(full, newdata = test, type = "response")
+stopifnot(all(is.finite(probability)))
+for (threshold in c(0.1, 0.2, 0.5)) {
+  cat("\nThreshold:", threshold, "\n")
+  print(metrics(test$isLoanDefault, as.integer(probability >= threshold)))
+}
+metrics(test$isLoanDefault, rep("0", nrow(test)))
+mean((probability - as.integer(test$isLoanDefault == "1"))^2)
+```
+All default-recall calculations use class 1 as positive. Odds ratios describe conditional associations rather than causal effects or direct changes in probability. AIC comparison is meaningful here because all three models use identical observations; the original PDF compared some fits with different row counts.
