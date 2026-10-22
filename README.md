@@ -108,7 +108,7 @@ Key predictive variables included:
 - annual income
 - employment years
 
-The project also evaluated how probability cutoff thresholds impacted model classification performance. :contentReference[oaicite:0]{index=0}
+The project also evaluated how probability cutoff thresholds impacted model classification performance.
 
 ---
 
@@ -136,7 +136,7 @@ The project explored the tradeoff between:
 - Higher annual income generally reduced default likelihood.
 - Accuracy alone was misleading because of class imbalance in the dataset.
 - Lower classification thresholds improved the detection of high-risk loans.
-- The Top 5 predictor logistic regression model produced the best AIC performance. :contentReference[oaicite:1]{index=1}
+- The Top 5 predictor logistic regression model produced the best AIC performance.
 
 ---
 
