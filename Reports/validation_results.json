@@ -1,0 +1,60 @@
+{
+  "training_rows": 19395,
+  "test_rows": 9696,
+  "full_model_training_rows": 19395,
+  "top5_training_rows": 19395,
+  "top3_training_rows": 19395,
+  "aic": {
+    "full": 13007.14428350569,
+    "top5": 13045.065214371503,
+    "top3": 13042.345024935687
+  },
+  "test_metrics": {
+    "0.1": {
+      "accuracy": 0.5105198019802,
+      "precision_default": 0.1523015722675,
+      "recall_default": 0.7479069767442,
+      "specificity": 0.4809186869273,
+      "balanced_accuracy": 0.6144128318357
+    },
+    "0.2": {
+      "accuracy": 0.8563325082508,
+      "precision_default": 0.2286689419795,
+      "recall_default": 0.1246511627907,
+      "specificity": 0.9475698874841,
+      "balanced_accuracy": 0.5361105251374
+    },
+    "0.5": {
+      "accuracy": 0.8890264026403,
+      "precision_default": 0,
+      "recall_default": 0,
+      "specificity": 0.9998840041758,
+      "balanced_accuracy": 0.4999420020879
+    }
+  },
+  "all_nondefault_metrics": {
+    "accuracy": 0.8891295379538,
+    "precision_default": null,
+    "recall_default": 0,
+    "specificity": 1,
+    "balanced_accuracy": 0.5
+  },
+  "brier_score": 0.09547419059872,
+  "checked_at_utc": "2026-10-22 21:56:48 UTC",
+  "R_version": "R version 4.5.3 (2026-03-11)",
+  "package_versions": {
+    "knitr": "1.52",
+    "rmarkdown": "2.32",
+    "jsonlite": "2.0.0",
+    "dplyr": "1.2.1",
+    "ggplot2": "4.0.3",
+    "forecast": "9.0.2",
+    "vars": "1.6.1",
+    "rpart": "4.1.27",
+    "ggfortify": "0.4.24",
+    "broom": "1.0.13",
+    "nycflights13": "1.0.2"
+  },
+  "source": "Analysis/loan_default_logistic.Rmd",
+  "scope": "Revised R Markdown workflow executed and rendered; archived historical analyses are not claimed as reproduced when preprocessing or evaluation changed."
+}
